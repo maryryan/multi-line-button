@@ -20,6 +20,21 @@ var x = d3.time.scale()
 var y = d3.scale.linear()
     .range([height, 0]);
 
+// d3.selection.prototype.moveToFront = function() {  
+//   return this.each(function(){
+//     this.parentNode.appendChild(this);
+//   });
+// };
+
+// d3.selection.prototype.moveToBack = function() {  
+//   return this.each(function() { 
+//     var firstChild = this.parentNode.firstChild; 
+//       if (firstChild) { 
+//         this.parentNode.insertBefore(this, firstChild); 
+//       } 
+//   });
+// };
+
 var color = d3.scale.category20c();
 
 // DEFINE AXES
@@ -50,8 +65,6 @@ var svg = d3.select(".chart").append("svg")
 // IMPORT DATA
 d3.csv("data/degree_cost.csv", function(error, data) {
   if (error) throw error;
-  //console.log(data[1]["agriculture-nr"]);
-
 
   var colorDomain = 
     d3.keys(data[0]).filter(function(key) {
@@ -104,45 +117,88 @@ d3.csv("data/degree_cost.csv", function(error, data) {
   var MAX = d3.max(degrees, function(c) { return d3.max(c.values, function(v) { return v.price;});  });
 
   var PRICE = d3.select(degrees, function(c) { d3.select(c.values, function(v) { return v.price;}); });
-  console.log(PRICE[0][0]);
+  console.log(PRICE[0][0][0]["values"]);
     //PRICE[array][array][SPECIFY FOR DEGREE]["values"][SPECIFY FOR YEAR]["price"]
 
-  var tip = d3.tip()
-  .attr('class', 'd3-tip')
-  .offset([-10, 0])
-  .html(function(d) {
-    //need to fix d.price so shows the amount --> if statement depending on where the x-coords are?
-    return "<strong, style='color:teal'>" + d.name +":</strong> <span style='color:white'>" + PRICE[0][0]["name"]["values"][function(){
-       if (d3.event.pageX > 100 && d3.event.pageX <= 200) { return 0}//2007
-       else if(d3.event.pageX > 200 && d3.event.pageX <= 284) { return 1}//2008
-       else if (d3.event.pageX > 284 && d3.event.pageX <=367) { return 2}//2009
-       else if (d3.event.pageX > 367 && d3.event.pageX <=446) { return 3}//2010
-       else if (d3.event.pageX > 446 && d3.event.pageX <=526) { return 4}//2011
-       else if (d3.event.pageX > 526 && d3.event.pageX <=610) { return 5}//2012
-       else if (d3.event.pageX > 610 && d3.event.pageX <=690) { return 6}//2013
-       else if (d3.event.pageX > 690 && d3.event.pageX <=762) { return 7}//2014
-       else if (d3.event.pageX > 762) { return 8};//2015
-     }]
-     ["price"] + "</span>";
-  })
-  .style("left", function(d) {
-    return d + "px"
-  });
+  degree.selectAll(".dot")
+    .data(function(d) {
+      return d.values;
+    })
+    .enter().append("circle")
+    .attr("class", "dot")
+    .attr("cx", function(d) {
+      return x(d.date);
+    })
+    .attr("cy", function(d) {
+      return y(d.price);
+    })
+    .attr("r", 5)
+    .on("mouseover", function(d) {
 
-  svg.call(tip);
+      var displayDate = moment(d.date).format("YYYY");
+      var displayVal = "$"+d.price;
+
+      $(".d3-tip").html(
+        "<div class='name'>"+d.name+"</div>"+
+        "<div class='date'>"+displayDate+": </div>"+
+        "<div class='price'>"+displayVal+"</div>"
+        )
+
+      $(".d3-tip").show();
+
+      d3.select(this).style("opacity", 1);
+    })
+    .on("mousemove", function(d) {
+
+      var xPos = d3.mouse(this)[0] + margin.left + 10;
+      var yPos = d3.mouse(this)[1] + margin.top + 10;
+
+      $(".d3-tip").css({
+        "left": xPos + "px",
+        "top": yPos + "px"
+      })
+    })
+    .on("mouseout", function(d) {
+      d3.select(this).style("opacity", 0);
+      $(".d3-tip").hide();
+    })
+
+  // var tip = d3.tip()
+  // .attr('class', 'd3-tip')
+  // .offset([-10, 0])
+  // .html(function(d) {
+  //   //need to fix d.price so shows the amount --> if statement depending on where the x-coords are?
+  //   return "<strong, style='color:teal'>" + d.name +":</strong> <span style='color:white'>" + PRICE[0][0]["name"]["values"][function(){
+  //      if (d3.event.pageX > 100 && d3.event.pageX <= 200) { return 0}//2007
+  //      else if(d3.event.pageX > 200 && d3.event.pageX <= 284) { return 1}//2008
+  //      else if (d3.event.pageX > 284 && d3.event.pageX <=367) { return 2}//2009
+  //      else if (d3.event.pageX > 367 && d3.event.pageX <=446) { return 3}//2010
+  //      else if (d3.event.pageX > 446 && d3.event.pageX <=526) { return 4}//2011
+  //      else if (d3.event.pageX > 526 && d3.event.pageX <=610) { return 5}//2012
+  //      else if (d3.event.pageX > 610 && d3.event.pageX <=690) { return 6}//2013
+  //      else if (d3.event.pageX > 690 && d3.event.pageX <=762) { return 7}//2014
+  //      else if (d3.event.pageX > 762) { return 8};//2015
+  //    }]
+  //    ["price"] + "</span>";
+  // })
+  // .style("left", function(d) {
+  //   return d + "px"
+  // });
+
+  // svg.call(tip);
 
   degree.append("path")
     .attr("class", "line")
     .attr("d", function(d) { return line(d.values); })
     .attr("stroke", "gray")
-    .on('mouseover', tip.show)
-    //fixing the tooltip so it appears close to the line
-    .on("mousemove", function () {
-    return tip
-        .style("top", (d3.event.pageY - 70) + "px")
-        .style("left", (d3.event.pageX) + "px");
-    })
-    .on('mouseout', tip.hide);
+    // .on('mouseover', tip.show)
+    // //fixing the tooltip so it appears close to the line
+    // .on("mousemove", function () {
+    // return tip
+    //     .style("top", (d3.event.pageY - 70) + "px")
+    //     .style("left", (d3.event.pageX) + "px");
+    // })
+    // .on('mouseout', tip.hide);
 
   setNav();
 
