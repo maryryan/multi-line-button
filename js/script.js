@@ -31,21 +31,13 @@ var yAxis = d3.svg.axis()
     .scale(y)
     .orient("left");
 
-var tip = d3.tip()
-  .attr('class', 'd3-tip')
-  .offset([-10, 0])
-  .html(function(d) {
-    //need to fix d.price so shows the amount
-    return "<strong, style='color:teal'>" + d.name +":</strong> <span style='color:white'>" + d.price + "</span>";
-  })
-  .style("left", function(d) {
-    return d + "px"
-  });
+
 
 // APPEND SVG AND AXES GROUPS TO THE DOM
 var line = d3.svg.line()
     .x(function(d) { return x(d.date); })
-    .y(function(d) { return y(d.price); });
+    .y(function(d) { return y(d.price);});
+
 
 var svg = d3.select(".chart").append("svg")
     .attr("width", width + margin.left + margin.right)
@@ -54,14 +46,11 @@ var svg = d3.select(".chart").append("svg")
     .attr("class", "chart-g")
     .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
-svg.call(tip);
-
 
 // IMPORT DATA
 d3.csv("data/degree_cost.csv", function(error, data) {
   if (error) throw error;
-
-  //setNav();
+  //console.log(data[1]["agriculture-nr"]);
 
 
   var colorDomain = 
@@ -90,7 +79,6 @@ d3.csv("data/degree_cost.csv", function(error, data) {
     d3.max(degrees, function(c) { return d3.max(c.values, function(v) { return v.price;});  })
   ]);
 
-
   svg.append("g")
       .attr("class", "x axis")
       .attr("transform", "translate(0," + height + ")")
@@ -111,6 +99,37 @@ d3.csv("data/degree_cost.csv", function(error, data) {
     .data(degrees)
     .enter().append("g")
     .attr("class", "degree");
+
+
+  var MAX = d3.max(degrees, function(c) { return d3.max(c.values, function(v) { return v.price;});  });
+
+  var PRICE = d3.select(degrees, function(c) { d3.select(c.values, function(v) { return v.price;}); });
+  console.log(PRICE[0][0]);
+    //PRICE[array][array][SPECIFY FOR DEGREE]["values"][SPECIFY FOR YEAR]["price"]
+
+  var tip = d3.tip()
+  .attr('class', 'd3-tip')
+  .offset([-10, 0])
+  .html(function(d) {
+    //need to fix d.price so shows the amount --> if statement depending on where the x-coords are?
+    return "<strong, style='color:teal'>" + d.name +":</strong> <span style='color:white'>" + PRICE[0][0]["name"]["values"][function(){
+       if (d3.event.pageX > 100 && d3.event.pageX <= 200) { return 0}//2007
+       else if(d3.event.pageX > 200 && d3.event.pageX <= 284) { return 1}//2008
+       else if (d3.event.pageX > 284 && d3.event.pageX <=367) { return 2}//2009
+       else if (d3.event.pageX > 367 && d3.event.pageX <=446) { return 3}//2010
+       else if (d3.event.pageX > 446 && d3.event.pageX <=526) { return 4}//2011
+       else if (d3.event.pageX > 526 && d3.event.pageX <=610) { return 5}//2012
+       else if (d3.event.pageX > 610 && d3.event.pageX <=690) { return 6}//2013
+       else if (d3.event.pageX > 690 && d3.event.pageX <=762) { return 7}//2014
+       else if (d3.event.pageX > 762) { return 8};//2015
+     }]
+     ["price"] + "</span>";
+  })
+  .style("left", function(d) {
+    return d + "px"
+  });
+
+  svg.call(tip);
 
   degree.append("path")
     .attr("class", "line")

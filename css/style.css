@@ -14,13 +14,9 @@ body {
   shape-rendering: crispEdges;
 }
 
-.x.axis path {
-  display: none;
-}
-
 .line {
   fill: none;
-  stroke-width: 1.5px;
+  stroke-width: 2px;
 }
 
 .axis path,
