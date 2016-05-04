@@ -236,7 +236,13 @@ function setNav() {
 
   $(".line").on("mouseover", function(d) {
     d3.select(this).attr("class", "line")
-      .style("stroke", "gold");
+      .style("stroke", function(d) {
+        //Color coding for resident (gold) or non-resident (teal) student
+        var resType = d.name.split("-")[1];
+        if(resType == "nr") { return "gold"}
+        else { return "teal"}
+      }
+        );
     })
     .on("mouseout", function(d) {
       d3.select(this).attr("class", "line")
