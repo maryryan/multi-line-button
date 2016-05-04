@@ -1,10 +1,15 @@
-
-
 //HOW TO GET VAL TO DISTINGUISH BETWEEN RES AND NR
+var chartThisValue = "agriculture";
 
-var highlightThis = "agriculture";
-// var highlightRes = "agriculture-r";
-// var highlightNR = "agriculture-nr";
+//var legendData = {name: ["Resident", "Non-resident"], color: ["teal", "gold"]};
+var legendData = [
+{name: 'Non-resident', color: 'gold'},
+{name: 'Resident', color: 'teal'}
+];
+
+
+var legendRectSize = 18;
+var legendSpacing= 4;
 
 //DEFINE CHART DIMENSIONS
 var margin = {top: 20, right: 20, bottom: 30, left: 50};
@@ -19,21 +24,6 @@ var x = d3.time.scale()
 
 var y = d3.scale.linear()
     .range([height, 0]);
-
-// d3.selection.prototype.moveToFront = function() {  
-//   return this.each(function(){
-//     this.parentNode.appendChild(this);
-//   });
-// };
-
-// d3.selection.prototype.moveToBack = function() {  
-//   return this.each(function() { 
-//     var firstChild = this.parentNode.firstChild; 
-//       if (firstChild) { 
-//         this.parentNode.insertBefore(this, firstChild); 
-//       } 
-//   });
-// };
 
 var color = d3.scale.category20c();
 
@@ -66,6 +56,8 @@ var svg = d3.select(".chart").append("svg")
 d3.csv("data/degree_cost.csv", function(error, data) {
   if (error) throw error;
 
+  setNav();
+
   var colorDomain = 
     d3.keys(data[0]).filter(function(key) {
         return key !== "YEAR";
@@ -81,10 +73,11 @@ d3.csv("data/degree_cost.csv", function(error, data) {
     return {
       name: name,
       values: data.map(function(d)  {
-        return{date:d["YEAR"], price: +d[name]};
+        return{date:d["YEAR"], price: +d[name]};//this is where d.price comes from
       })
     };
   });
+
 
 // PREPARE DATA
   x.domain(d3.extent(data, function(d) { return d["YEAR"]; }));
@@ -113,173 +106,95 @@ d3.csv("data/degree_cost.csv", function(error, data) {
     .enter().append("g")
     .attr("class", "degree");
 
-
-  var MAX = d3.max(degrees, function(c) { return d3.max(c.values, function(v) { return v.price;});  });
-
-  var PRICE = d3.select(degrees, function(c) { d3.select(c.values, function(v) { return v.price;}); });
-  console.log(PRICE[0][0][0]["values"]);
-    //PRICE[array][array][SPECIFY FOR DEGREE]["values"][SPECIFY FOR YEAR]["price"]
-
-degree.selectAll(".dot")
-    .data(function(d) {
-          //The `city` selection already holds the data for our three lines.
-          //So we'll use it to draw our dots. The value for each array of dots
-          //will be the array of values attached to each line:
-      return d.values;
-    })
-    .enter().append("circle") //Add a new circle for each data point in the array.
-    .attr("class", "dot")
-    .attr("cx", function(d) {
-        return x(d.date); //Position accordingly.
-    })
-    .attr("cy", function(d) {
-        return y(d.price); //Position accordingly.
-    })
-    .attr("r", 5)
-    .on("mouseover", function(d) {
-
-            //We're using the Moment.js library to get a month and year for our tooltip.
-            //We're using Moment.js because our dates are in the js date format.
-        var displayDate = moment(d.date).format("YYYY");
-        var displayVal = "$"+d.price+"0";
-
-            //Append the values to the tooltip with some markup.
-        $(".tt").html(
-          "<div class='name'>"+d.name+"</div>"+
-          "<div class='date'>"+displayDate+": </div>"+
-          "<div class='price'>"+displayVal+"</div>"
-        )
-
-            //Show the tooltip.
-        $(".tt").show();
-
-            //Make the dot visible.
-        d3.select(this).style("opacity", 1);
-            
-    })
-    .on("mousemove", function(d) {
-
-            //Get the mouse position relative to the .chart div.
-            //Add the margin.left and margin.top values to make the div set properly in the .chart.
-            //Add 10px to each so the tooltip is offset appropriately.
-        var xPos = d3.mouse(this)[0] + margin.left + 10;
-        var yPos = d3.mouse(this)[1] + margin.top + 10;
-
-            //Use jQuery to position the .tt div with the .chart div.
-            //See the CSS for important style info here. 
-        $(".tt").css({
-            "left": xPos + "px",
-            "top": yPos + "px"
-        })
-
-    })
-    .on("mouseout", function(d) {
-            //Turn this dot's opacity back to 0
-            //And hide the tooltip.
-        d3.select(this).style("opacity", 0);
-        $(".tt").hide();
-    })
-
-
-  // var tip = d3.tip()
-  // .attr('class', 'd3-tip')
-  // .offset([-10, 0])
-  // .html(function(d) {
-  //   //need to fix d.price so shows the amount --> if statement depending on where the x-coords are?
-  //   return "<strong, style='color:teal'>" + d.name +":</strong> <span style='color:white'>" + PRICE[0][0]["name"]["values"][function(){
-  //      if (d3.event.pageX > 100 && d3.event.pageX <= 200) { return 0}//2007
-  //      else if(d3.event.pageX > 200 && d3.event.pageX <= 284) { return 1}//2008
-  //      else if (d3.event.pageX > 284 && d3.event.pageX <=367) { return 2}//2009
-  //      else if (d3.event.pageX > 367 && d3.event.pageX <=446) { return 3}//2010
-  //      else if (d3.event.pageX > 446 && d3.event.pageX <=526) { return 4}//2011
-  //      else if (d3.event.pageX > 526 && d3.event.pageX <=610) { return 5}//2012
-  //      else if (d3.event.pageX > 610 && d3.event.pageX <=690) { return 6}//2013
-  //      else if (d3.event.pageX > 690 && d3.event.pageX <=762) { return 7}//2014
-  //      else if (d3.event.pageX > 762) { return 8};//2015
-  //    }]
-  //    ["price"] + "</span>";
-  // })
-  // .style("left", function(d) {
-  //   return d + "px"
-  // });
-
-  // svg.call(tip);
-
   degree.append("path")
     .attr("class", "line")
     .attr("d", function(d) { return line(d.values); })
-    .attr("stroke", "gray");
-    // .on('mouseover', tip.show)
-    // //fixing the tooltip so it appears close to the line
-    // .on("mousemove", function () {
-    // return tip
-    //     .style("top", (d3.event.pageY - 70) + "px")
-    //     .style("left", (d3.event.pageX) + "px");
-    // })
-    // .on('mouseout', tip.hide);
+    .attr("opacity", function(d) {
+      var Name = d.name.split("-")[0];
+      if(Name == chartThisValue) {
+        return 1;
+      } else {
+        return 0;
+      }
+    })
+    .attr("stroke", function(d) {
+      var resType = d.name.split("-")[1];
 
-  setNav();
+      if(resType === "nr") {
+        return "gold";
+      } else {
+        return "teal";
+      }
+    });
 
-  // degree.append("text")
-  //   .datum(function(d) { return {name: d.name, value: d.values[d.values.length - 1]}; })
-  //   .attr("transform", function(d) { return "translate(" + x(d.value.YEAR) + "," + y(d.value.price) + ")"; })
-  //   .attr("x", 3)
-  //   .attr("dy", ".35em")
-  //   .text(function(d) { return d.name});
+  var legend = svg.selectAll(".legend")
+    .data(legendData)
+    .enter()
+    .append("g")
+    .attr("class", "legend")
+    .attr("transform", function(d, i) {
+      var height = legendRectSize + legendSpacing;
+      var offset = -18*height;
+      var horz = 1.5*legendRectSize;
+      var vert = i * height - offset;
+      return 'translate(' + horz + ',' + vert +')';
+    });
+    // .attr("x", width-65)
+    // .attr("y", 25)
+    // .attr("height", 100)
+    // .attr("width", 100)
+    // .style("fill", function(d) {
+    //    return legendData.color;
+    // });
 
+  legend.append('rect')
+    .attr('width', legendRectSize)
+    .attr('height', legendRectSize)
+    .style('fill', function(d) { return d.color})
+    .style('stroke', function(d) { return d.color});
 
+  legend.append('text')
+    .attr('x', legendRectSize + legendSpacing)
+    .attr('y', legendRectSize - legendSpacing)
+    .text(function(d) { return d.name;});
 
-  //updateLine();
+  
 });
 
 
-
-// function updateLine() {
-
-//   //line.y(function(d) { return y(d[highlightThis]); });
-
-//   d3.select(".line")
-//     .transition()
-//     .style("stroke", function(d) {
-//       if ($(".btn").Class == "active") {return "gold"}
-//       else {return "gray"};
-//     });
-
-// }
 
 
 
 
 function setNav() {
 
-  $(".line").on("mouseover", function(d) {
-    d3.select(this).attr("class", "line")
+  $(".btn").on("click", function() {
+    $(".btn").removeClass("active");
+    $(this).addClass("active");
+
+    var val = $(this).attr("val");
+
+    chartThisValue = val;
+
+    d3.selectAll(".line")
+      .attr("opacity", function(d) {
+        var lineName = d.name.split("-")[0];
+
+        if(lineName === val) {
+          return 1;
+        } else {
+          return 0;
+        }
+      })
       .style("stroke", function(d) {
-        //Color coding for resident (gold) or non-resident (teal) student
+        //Color coding for resident (teal) or non-resident (gold) student
         var resType = d.name.split("-")[1];
-        if(resType == "nr") { return "gold"}
-        else { return "teal"}
-      }
-        );
-    })
-    .on("mouseout", function(d) {
-      d3.select(this).attr("class", "line")
-        .style("stroke", "gray");
-    });
-
-
-    // $(".btn").removeClass("active");
-    // $(this).addClass("active");
-
-    // var val = $(this).attr("val");
-
-
-    // highlightThis = val;
-
-
-    // highlightRes = val;
-    // highlightNR = val;
-
-  // });
+          if(resType == "nr") { return "gold"}
+          else { return "teal"}
+       }
+      );
+  })
 
 }
+
+
